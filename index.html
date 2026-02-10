@@ -558,7 +558,7 @@
 const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyArFBvuBEpcBzEJDrd16rrXQrcWBm3PBrrzdu1T8OIpB9C6SR8aDSdsvVzeXpnizYF/exec';
 
 // 📅 課程開始日期（用來判斷當前是第幾週）
-const COURSE_START_DATE = new Date('2026-01-12'); // 課程開始日期：2026/3/9
+const COURSE_START_DATE = new Date('2026-01-12'); // 課程開始日期：2026/1/12
 
 // 📋 12週任務資料
 // 每週的 add / behavior / clear 任務內容
@@ -573,7 +573,7 @@ const WEEKLY_TASKS = {
   },
   2: {
     add: ['每天走5千步'],
-    behavior: ['空腹1﻿2小時'],
+    behavior: ['空腹12小時'],
     clear: ['不喝含糖飲料'],
     cardImage1: 'images/card_a_week2.png',
     cardImage2: 'images/card_b_week2.png',
@@ -830,19 +830,27 @@ document.getElementById('reportForm').addEventListener('submit', async function 
   };
 
   try {
+    // 使用 URLSearchParams 以 application/x-www-form-urlencoded 格式送出
+    // 這是與 Google Apps Script 最相容的方式
+    const params = new URLSearchParams();
+    params.append('data', JSON.stringify(formData));
+
     const response = await fetch(GOOGLE_SCRIPT_URL, {
       method: 'POST',
-      mode: 'no-cors',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(formData),
+      body: params,
     });
 
-    showToast('✅ 回報成功！感謝你的努力 💪');
+    const result = await response.json();
 
-    // 重置表單（保留學號和日期）
-    document.getElementById('mealUploaded').checked = false;
-    document.querySelectorAll('input[name="add"], input[name="behavior"], input[name="clear"]').forEach(cb => cb.checked = false);
-    document.getElementById('message').value = '';
+    if (result.result === 'success') {
+      showToast('✅ 回報成功！感謝你的努力 💪');
+      // 重置表單（保留學號和日期）
+      document.getElementById('mealUploaded').checked = false;
+      document.querySelectorAll('input[name="add"], input[name="behavior"], input[name="clear"]').forEach(cb => cb.checked = false);
+      document.getElementById('message').value = '';
+    } else {
+      showToast('❌ 送出失敗：' + (result.message || '未知錯誤'), true);
+    }
 
   } catch (error) {
     console.error('Error:', error);
