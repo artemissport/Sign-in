@@ -555,96 +555,96 @@
 // ====================================================================
 
 // 🔗 Google Apps Script Web App URL（部署後貼上你的URL）
-const GOOGLE_SCRIPT_URL = 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE';
+const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyArFBvuBEpcBzEJDrd16rrXQrcWBm3PBrrzdu1T8OIpB9C6SR8aDSdsvVzeXpnizYF/exec';
 
 // 📅 課程開始日期（用來判斷當前是第幾週）
-const COURSE_START_DATE = new Date('2026-03-09'); // 課程開始日期：2026/3/9
+const COURSE_START_DATE = new Date('2026-01-12'); // 課程開始日期：2026/3/9
 
 // 📋 12週任務資料
 // 每週的 add / behavior / clear 任務內容
 // 你可以預先把12週的任務都寫好
 const WEEKLY_TASKS = {
   1: {
-    add: ['任務1 (請替換)'],
-    behavior: ['任務1 (請替換)'],
-    clear: ['任務1 (請替換)'],
+    add: ['每餐最少吃1手掌蔬菜'],
+    behavior: ['執行進食順序菜>肉>飯'],
+    clear: ['不吃炸物'],
     cardImage1: 'images/card_a_week1.png',
     cardImage2: 'images/card_b_week1.png',
   },
   2: {
-    add: ['任務2 (請替換)'],
-    behavior: ['任務2 (請替換)'],
-    clear: ['任務2 (請替換)'],
+    add: ['每天走5千步'],
+    behavior: ['空腹1﻿2小時'],
+    clear: ['不喝含糖飲料'],
     cardImage1: 'images/card_a_week2.png',
     cardImage2: 'images/card_b_week2.png',
   },
   3: {
-    add: ['任務3 (請替換)'],
-    behavior: ['任務3 (請替換)'],
-    clear: ['任務3 (請替換)'],
+    add: ['每天完成一堂線上課程'],
+    behavior: ['每餐飯後站立或走路10～15分鐘'],
+    clear: ['不吃餅乾、零食'],
     cardImage1: 'images/card_a_week3.png',
     cardImage2: 'images/card_b_week3.png',
   },
   4: {
-    add: ['任務4 (請替換)'],
-    behavior: ['任務4 (請替換)'],
-    clear: ['任務4 (請替換)'],
+    add: ['每天喝水至少2000cc'],
+    behavior: ['每口食物咀嚼30下'],
+    clear: ['不吃甜點'],
     cardImage1: 'images/card_a_week4.png',
     cardImage2: 'images/card_b_week4.png',
   },
   5: {
-    add: ['任務5 (請替換)'],
-    behavior: ['任務5 (請替換)'],
-    clear: ['任務5 (請替換)'],
+    add: ['每餐吃一種蛋白質食物'],
+    behavior: ['空腹14小時'],
+    clear: ['不站上體重計'],
     cardImage1: 'images/card_a_week5.png',
     cardImage2: 'images/card_b_week5.png',
   },
   6: {
-    add: ['任務6 (請替換)'],
-    behavior: ['任務6 (請替換)'],
-    clear: ['任務6 (請替換)'],
+    add: ['每天走7千步'],
+    behavior: ['每日睡滿7-8小時'],
+    clear: ['不吃醣(糖)油混和物'],
     cardImage1: 'images/card_a_week6.png',
     cardImage2: 'images/card_b_week6.png',
   },
   7: {
-    add: ['任務7 (請替換)'],
-    behavior: ['任務7 (請替換)'],
-    clear: ['任務7 (請替換)'],
+    add: ['每餐吃到一種天然碳水化合物'],
+    behavior: ['每天超慢跑10分鐘'],
+    clear: ['到便利商店不買零食、飲料'],
     cardImage1: 'images/card_a_week7.png',
     cardImage2: 'images/card_b_week7.png',
   },
   8: {
-    add: ['任務8 (請替換)'],
-    behavior: ['任務8 (請替換)'],
-    clear: ['任務8 (請替換)'],
+    add: ['每天吃10-20克無調味堅果'],
+    behavior: ['每天曬太陽15-20分鐘'],
+    clear: ['睡前4小時不吃東西'],
     cardImage1: 'images/card_a_week8.png',
     cardImage2: 'images/card_b_week8.png',
   },
   9: {
-    add: ['任務9 (請替換)'],
-    behavior: ['任務9 (請替換)'],
-    clear: ['任務9 (請替換)'],
+    add: ['每天深蹲60下'],
+    behavior: ['每天超慢跑20分鐘'],
+    clear: ['不喝酒精飲料'],
     cardImage1: 'images/card_a_week9.png',
     cardImage2: 'images/card_b_week9.png',
   },
   10: {
-    add: ['任務10 (請替換)'],
-    behavior: ['任務10 (請替換)'],
-    clear: ['任務10 (請替換)'],
+    add: ['每天攝取一種好油'],
+    behavior: ['每天起床對鏡子說你是最棒的'],
+    clear: ['不吃甜點'],
     cardImage1: 'images/card_a_week10.png',
     cardImage2: 'images/card_b_week10.png',
   },
   11: {
-    add: ['任務11 (請替換)'],
-    behavior: ['任務11 (請替換)'],
-    clear: ['任務11 (請替換)'],
+    add: ['每天睡前核心訓練三分鐘'],
+    behavior: ['每周選3-4天空腹16小時'],
+    clear: ['睡前4小時不吃東西'],
     cardImage1: 'images/card_a_week11.png',
     cardImage2: 'images/card_b_week11.png',
   },
   12: {
-    add: ['任務12 (請替換)'],
-    behavior: ['任務12 (請替換)'],
-    clear: ['任務12 (請替換)'],
+    add: ['每天跟家人/朋友分享一個健康資訊或減重的問題'],
+    behavior: ['每天讚美自己一個優點或你覺得做的很棒的一件事'],
+    clear: ['不起負面念頭'],
     cardImage1: 'images/card_a_week12.png',
     cardImage2: 'images/card_b_week12.png',
   },
