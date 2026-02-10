@@ -412,15 +412,12 @@
 </head>
 <body>
 
-  <!-- Toast -->
   <div class="toast" id="toast"></div>
 
-  <!-- Loading -->
   <div class="loading-overlay" id="loading">
     <div class="spinner"></div>
   </div>
 
-  <!-- Header -->
   <div class="header">
     <h1>📋 11月班任務回報表單</h1>
     <p>請依序填寫以下欄位完成今日任務回報</p>
@@ -429,7 +426,6 @@
   <div class="form-container">
     <form id="reportForm" novalidate>
 
-      <!-- 1. 學號 -->
       <div class="form-card">
         <div class="field-label">
           1. 學號 <span class="required-star">*</span>
@@ -442,7 +438,6 @@
         <div class="error-msg" id="studentIdError">請輸入正確的7碼學號（僅限數字）</div>
       </div>
 
-      <!-- 2. 任務日期 -->
       <div class="form-card">
         <div class="field-label">
           2. 任務日期 <span class="required-star">*</span>
@@ -453,7 +448,6 @@
         <input type="date" id="taskDate" required>
       </div>
 
-      <!-- 3. 飲食上傳 -->
       <div class="form-card">
         <div class="field-label">
           3. 👉 今日已經上傳飲食（至少一餐） <span class="required-star">*</span>
@@ -469,7 +463,6 @@
         </div>
       </div>
 
-      <!-- 4. Add -->
       <div class="form-card" id="addSection">
         <div class="field-label">
           4. 👉 Add <span class="required-star">*</span>
@@ -481,7 +474,6 @@
         <div class="checkbox-group" id="addCheckboxes"></div>
       </div>
 
-      <!-- 5. Behavior -->
       <div class="form-card" id="behaviorSection">
         <div class="field-label">
           5. 👉 Behavior <span class="required-star">*</span>
@@ -493,7 +485,6 @@
         <div class="checkbox-group" id="behaviorCheckboxes"></div>
       </div>
 
-      <!-- 6. Clear -->
       <div class="form-card" id="clearSection">
         <div class="field-label">
           6. 🧹 Clear <span class="required-star">*</span>
@@ -505,7 +496,6 @@
         <div class="checkbox-group" id="clearCheckboxes"></div>
       </div>
 
-      <!-- 7. 留言 -->
       <div class="form-card">
         <div class="field-label">
           7. 想跟校長及團隊說的話
@@ -513,7 +503,6 @@
         <textarea id="message" placeholder="在這裡留下你想說的話..."></textarea>
       </div>
 
-      <!-- 任務卡圖片 -->
       <div class="form-card">
         <div class="section-title">
           <span class="emoji">🃏</span> 本週任務卡
@@ -535,7 +524,6 @@
         </div>
       </div>
 
-      <!-- Submit -->
       <div class="form-card" style="border: none; box-shadow: none; background: transparent; padding: 0;">
         <button type="submit" class="submit-btn" id="submitBtn">
           送出回報 ✅
@@ -551,18 +539,23 @@
 
 <script>
 // ====================================================================
-// 📌 設定區 - 請根據需要修改以下內容
+// 📌 設定區
 // ====================================================================
 
-// 🔗 Google Apps Script Web App URL（部署後貼上你的URL）
+// 🔴 請在這裡貼上你部署後的 Web App URL
 const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyzPagYnWpfpGiO9w2gf8jyDUlq8rEIMxFMZ4xiDrTWfUhIHImy8HkEGLGOuSkSO4ee/exec';
 
-// 📅 課程開始日期（用來判斷當前是第幾週）
-const COURSE_START_DATE = new Date('2026-01-12'); // 課程開始日期：2026/1/12
+// 📅 課程開始日期
+const COURSE_START_DATE = new Date('2026-01-12');
+
+// 🧧 停課週設定 (請填寫該週「週一」的日期)
+// 若有停課，程式會自動把那一週跳過，後面的週數順延
+const SKIP_WEEKS = [
+  '2026-02-16', // 範例：2/16 當週停課，週數不會前進
+  // '2026-04-05', // 如果有清明連假或其他停課，可以繼續加
+];
 
 // 📋 12週任務資料
-// 每週的 add / behavior / clear 任務內容
-// 你可以預先把12週的任務都寫好
 const WEEKLY_TASKS = {
   1: {
     add: ['每餐最少吃1手掌蔬菜'],
@@ -651,24 +644,46 @@ const WEEKLY_TASKS = {
 };
 
 // ====================================================================
-// 🔧 邏輯區 - 一般不需修改
+// 🔧 邏輯區
 // ====================================================================
 
-// 計算目前是第幾週
+// 計算目前是第幾週 (含停課邏輯)
 function getCurrentWeek() {
   const now = new Date();
+  
+  // 1. 先算出原始週數
   const diffTime = now - COURSE_START_DATE;
   const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-  const week = Math.floor(diffDays / 7) + 1;
+  let week = Math.floor(diffDays / 7) + 1;
+
+  // 2. 扣除已過的停課週
+  SKIP_WEEKS.forEach(dateStr => {
+    // 停課週的開始時間
+    const skipStartDate = new Date(dateStr);
+    // 停課週的結束時間 (該週日 23:59:59)
+    const skipEndDate = new Date(skipStartDate);
+    skipEndDate.setDate(skipEndDate.getDate() + 7);
+
+    // 如果現在時間已經「超過」了這週，代表這週不算進度，要扣掉
+    if (now >= skipEndDate) {
+      week -= 1;
+    }
+    // 如果現在「正在」這週裡面，週數也要扣掉 (或顯示暫停)，這裡簡單處理讓它維持上一週進度
+    else if (now >= skipStartDate && now < skipEndDate) {
+      week -= 1; 
+      // 這裡你可以選擇 week -= 1 (顯示上一週進度)
+      // 或是維持原樣但前端顯示「本週停課」
+    }
+  });
+
   return Math.max(1, Math.min(12, week));
 }
 
-// 產生 checkbox HTML（累積到當週）
+// 產生 checkbox HTML (累積到當週)
 function generateCheckboxes(containerId, category, currentWeek) {
   const container = document.getElementById(containerId);
   container.innerHTML = '';
 
-  // 收集從第 1 週到當週的所有任務（去重）
   const allTasks = [];
   for (let w = 1; w <= currentWeek; w++) {
     if (WEEKLY_TASKS[w] && WEEKLY_TASKS[w][category]) {
@@ -819,19 +834,17 @@ document.getElementById('reportForm').addEventListener('submit', async function 
 
   // 收集資料
   const formData = {
-    timestamp: formatTimestamp(),                              // A欄
-    studentId: studentId,                                       // B欄
-    message: document.getElementById('message').value || '',    // E欄
-    taskDate: formatTaskDate(taskDate),                         // G欄
-    mealUploaded: document.getElementById('mealUploaded').checked ? '已上傳' : '',  // H欄
-    addTasks: getCheckedValues('add'),                          // I欄
-    behaviorTasks: getCheckedValues('behavior'),                // J欄
-    clearTasks: getCheckedValues('clear'),                      // K欄
+    timestamp: formatTimestamp(),
+    studentId: studentId,
+    message: document.getElementById('message').value || '',
+    taskDate: formatTaskDate(taskDate),
+    mealUploaded: document.getElementById('mealUploaded').checked ? '已上傳' : '',
+    addTasks: getCheckedValues('add'),
+    behaviorTasks: getCheckedValues('behavior'),
+    clearTasks: getCheckedValues('clear'),
   };
 
   try {
-    // 使用 URLSearchParams 以 application/x-www-form-urlencoded 格式送出
-    // 這是與 Google Apps Script 最相容的方式
     const params = new URLSearchParams();
     params.append('data', JSON.stringify(formData));
 
@@ -840,11 +853,21 @@ document.getElementById('reportForm').addEventListener('submit', async function 
       body: params,
     });
 
-    const result = await response.json();
+    // 先讀取文字內容，避免直接 parse JSON 失敗
+    const textResponse = await response.text(); 
+    
+    // 嘗試解析 JSON
+    let result;
+    try {
+      result = JSON.parse(textResponse);
+    } catch (e) {
+      console.error('Server 回傳的不是 JSON:', textResponse);
+      throw new Error('伺服器發生錯誤，請檢查 GAS 權限設定或程式碼');
+    }
 
     if (result.result === 'success') {
       showToast('✅ 回報成功！感謝你的努力 💪');
-      // 重置表單（保留學號和日期）
+      // 重置表單
       document.getElementById('mealUploaded').checked = false;
       document.querySelectorAll('input[name="add"], input[name="behavior"], input[name="clear"]').forEach(cb => cb.checked = false);
       document.getElementById('message').value = '';
@@ -854,7 +877,7 @@ document.getElementById('reportForm').addEventListener('submit', async function 
 
   } catch (error) {
     console.error('Error:', error);
-    showToast('❌ 送出失敗，請稍後再試', true);
+    showToast('❌ 送出失敗：' + error.message, true);
   } finally {
     btn.disabled = false;
     loading.classList.remove('show');
