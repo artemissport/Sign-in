@@ -648,14 +648,15 @@
 // 🔴 請在這裡貼上你部署後的 Web App URL
 const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwZTc_hy4dT4Z0gJMm3_xe9D8Zwtc3Kmt1Qm6fsrvU-qxNaEor43JsI0LuZzlQG2mJV/exec';
 
-// 📅 課程開始日期
-const COURSE_START_DATE = new Date('2026-03-09');
+// 📅 課程開始日期 (已加上台灣時間早上 9 點的時區設定 +08:00)
+const COURSE_START_DATE = new Date('2026-03-09T09:00:00+08:00');
 
-// 🧧 停課週設定 (請填寫該週「週一」的日期)
+// 🧧 停課週設定
 // 若有停課，程式會自動把那一週跳過，後面的週數順延
+// ⚠️ 請確保停課日期也加上 T09:00:00+08:00
 const SKIP_WEEKS = [
-  '2026-02-16', // 範例：2/16 當週停課，週數不會前進
-  // '2026-04-05', // 如果有清明連假或其他停課，可以繼續加
+  // 這裡可以放入未來的停課日期，例如：
+  // '2026-04-06T09:00:00+08:00', 
 ];
 
 // 📋 12週任務資料
@@ -750,12 +751,12 @@ const WEEKLY_TASKS = {
 // 🔧 邏輯區
 // ====================================================================
 
-// 計算目前是第幾週 (含停課邏輯)
+// 計算目前是第幾週 (含停課邏輯，以台灣時間每週一早上9點切換)
 function getCurrentWeek() {
   const now = new Date();
   
-  // 1. 先算出原始週數
-  const diffTime = now - COURSE_START_DATE;
+  // 1. 先算出原始週數 (直接計算毫秒差，避免跨時區產生的天數誤差)
+  const diffTime = now.getTime() - COURSE_START_DATE.getTime();
   const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
   let week = Math.floor(diffDays / 7) + 1;
 
@@ -763,19 +764,20 @@ function getCurrentWeek() {
   SKIP_WEEKS.forEach(dateStr => {
     // 停課週的開始時間
     const skipStartDate = new Date(dateStr);
-    // 停課週的結束時間 (該週日 23:59:59)
-    const skipEndDate = new Date(skipStartDate);
-    skipEndDate.setDate(skipEndDate.getDate() + 7);
+    // 停課週的結束時間 (使用毫秒 +7 天，避免瀏覽器 getDate 的日光節約時間雷區)
+    const skipEndDate = new Date(skipStartDate.getTime() + 7 * 24 * 60 * 60 * 1000);
 
-    // 如果現在時間已經「超過」了這週，代表這週不算進度，要扣掉
-    if (now >= skipEndDate) {
-      week -= 1;
-    }
-    // 如果現在「正在」這週裡面，週數也要扣掉 (或顯示暫停)，這裡簡單處理讓它維持上一週進度
-    else if (now >= skipStartDate && now < skipEndDate) {
-      week -= 1; 
-      // 這裡你可以選擇 week -= 1 (顯示上一週進度)
-      // 或是維持原樣但前端顯示「本週停課」
+    // 🛡️ 新增保護機制：只有當停課週在「開學日之後（含）」才需要計算
+    // 這樣就算陣列裡有上個月的舊資料，也不會影響到這次開課的計算
+    if (skipStartDate >= COURSE_START_DATE) {
+      // 如果現在時間已經「超過」了這週，代表這週不算進度，要扣掉
+      if (now >= skipEndDate) {
+        week -= 1;
+      }
+      // 如果現在「正在」這週裡面，週數也要扣掉維持上一週進度
+      else if (now >= skipStartDate && now < skipEndDate) {
+        week -= 1; 
+      }
     }
   });
 
@@ -839,9 +841,10 @@ function loadTaskCards(week) {
 function initForm() {
   const currentWeek = getCurrentWeek();
 
-  // 設定日期預設為今天
+  // 🛡️ 修正時區雷區：確保預設日期為使用者當地的「今天」，而非 UTC 時區
   const today = new Date();
-  document.getElementById('taskDate').valueAsDate = today;
+  const localDateStr = new Date(today.getTime() - (today.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
+  document.getElementById('taskDate').value = localDateStr;
 
   // 產生各區塊的 checkbox
   generateCheckboxes('addCheckboxes', 'add', currentWeek);
@@ -888,7 +891,7 @@ function showToast(msg, isError = false) {
   setTimeout(() => toast.classList.remove('show'), 3500);
 }
 
-// ✅ 新增：關閉成功彈窗的函數
+// 關閉成功彈窗的函數
 function closeSuccessModal() {
   document.getElementById('successModal').classList.remove('show');
 }
@@ -974,7 +977,7 @@ document.getElementById('reportForm').addEventListener('submit', async function 
     }
 
     if (result.result === 'success') {
-      // ✅ 修改：成功時改為顯示彈出視窗
+      // 成功時改為顯示彈出視窗
       document.getElementById('successModal').classList.add('show');
       
       // 重置表單
